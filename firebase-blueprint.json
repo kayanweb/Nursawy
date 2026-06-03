@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "message": {
+      "title": "Message",
+      "description": "Real-time message between staff.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "read": { "type": "boolean" }
+      },
+      "required": ["senderId", "receiverId", "content", "timestamp"]
+    },
+    "shiftSwap": {
+      "title": "Shift Swap Request",
+      "description": "Request to swap shifts.",
+      "type": "object",
+      "properties": {
+        "requesterId": { "type": "string" },
+        "offeredShiftId": { "type": "string" },
+        "requestedShiftId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] }
+      },
+      "required": ["requesterId", "offeredShiftId", "requestedShiftId", "status"]
+    },
+    "vacationRequest": {
+      "title": "Vacation Request",
+      "description": "Request for vacation.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "reason": { "type": "string" }
+      },
+      "required": ["userId", "startDate", "endDate", "status"]
+    }
+  },
+  "firestore": {
+    "messages": {
+      "schema": { "$ref": "#/entities/message" },
+      "description": "Messages between users."
+    },
+    "shiftSwaps": {
+      "schema": { "$ref": "#/entities/shiftSwap" },
+      "description": "Shift swap requests."
+    },
+    "vacationRequests": {
+      "schema": { "$ref": "#/entities/vacationRequest" },
+      "description": "Vacation requests."
+    }
+  }
+}
