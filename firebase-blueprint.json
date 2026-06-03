@@ -1,5 +1,15 @@
 {
   "entities": {
+    "HospitalSettings": {
+      "title": "Hospital Settings",
+      "description": "Hospital branding and settings.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nameEn": { "type": "string" }
+      },
+      "required": ["id"]
+    },
     "ClinicalRecord": {
       "title": "Clinical Record",
       "description": "A medical record document.",
@@ -52,6 +62,10 @@
     }
   },
   "firestore": {
+    "/baheya_settings/{settingId}": {
+      "schema": { "$ref": "HospitalSettings" },
+      "description": "Hospital settings."
+    },
     "/baheya_clinical_records/{recordId}": {
       "schema": { "$ref": "ClinicalRecord" },
       "description": "Clinical medical records."

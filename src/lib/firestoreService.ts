@@ -310,3 +310,22 @@ export async function saveNotification(notification: Notification): Promise<void
   }
 }
 
+// 12. Settings Sync
+export async function getHospitalSettings(): Promise<any> {
+    const docRef = doc(db, "baheya_settings", "main");
+    const docSnap = await getDocFromServer(docRef);
+    if (docSnap.exists()) {
+        return docSnap.data();
+    }
+    return null;
+}
+
+export async function saveHospitalSettings(settings: any): Promise<void> {
+    const path = `baheya_settings/main`;
+    try {
+        await setDoc(doc(db, "baheya_settings", "main"), settings);
+    } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, path);
+    }
+}
+

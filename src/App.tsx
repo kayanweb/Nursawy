@@ -42,10 +42,12 @@ import {
   Inbox,
   AlertTriangle,
   Send,
-  MessageSquare
+  MessageSquare,
+  Cloud
 } from "lucide-react";
 import { SavedRecord, FormTemplate, GridRow, AppUser, UserRole, DailyDutyTask, UnitDailyChecklist, SystemLog } from "./types";
 import MessagingDashboard from "./components/MessagingDashboard";
+import CloudSettingsPage from "./components/CloudSettingsPage";
 import { FORM_TEMPLATES, createNewRecord, getItemsForTemplate } from "./data/templates";
 import { generatePDF } from "./lib/pdfGenerator";
 import {
@@ -68,7 +70,9 @@ import {
   syncSystemUsers,
   saveSystemUser,
   syncNotifications,
-  saveNotification
+  saveNotification,
+  getHospitalSettings,
+  saveHospitalSettings
 } from "./lib/firestoreService";
 import { useFirestoreSync } from "./hooks/useFirestoreSync";
 
@@ -373,7 +377,7 @@ export default function App() {
   const numDays = new Date(recordDate.getFullYear(), recordDate.getMonth() + 1, 0).getDate();
   const [searchQuery, setSearchQuery] = useState("");
   const [dbStatus, setDbStatus] = useState<"connected" | "syncing" | "error">("connected");
-  const [activeTab, setActiveTab] = useState<"editor" | "history" | "settings" | "about" | "analytics" | "duty" | "it_panel" | "distribution" | "roster" | "messaging">("duty");
+  const [activeTab, setActiveTab] = useState<"editor" | "history" | "settings" | "about" | "analytics" | "duty" | "it_panel" | "distribution" | "roster" | "messaging" | "cloud_settings">("duty");
   const [ledgerViewMode, setLedgerViewMode] = useState<"weekly" | "monthly">("weekly");
   const [dayFocus, setDayFocus] = useState<"all" | number>("all"); // Show all 31 days or focus on a single day
   const [language, setLanguage] = useState<"ar" | "en">("ar");
@@ -1099,15 +1103,15 @@ export default function App() {
 
     // Load static templates configurations
     try {
-      // Load hospital branding settings
-      const storedSettings = localStorage.getItem("baheya_hospital_settings");
+    // Load hospital branding settings
+    getHospitalSettings().then((storedSettings) => {
       if (storedSettings) {
-        const parsed = JSON.parse(storedSettings);
-        setHospitalSettings(parsed);
-        setSettingsForm(parsed);
+        setHospitalSettings(storedSettings);
+        setSettingsForm(storedSettings);
       }
+    });
 
-      // Load custom templates
+    // Load custom templates
       const storedTemplates = localStorage.getItem("baheya_custom_templates");
       if (storedTemplates) {
         setCustomTemplates(JSON.parse(storedTemplates));
@@ -1607,6 +1611,7 @@ export default function App() {
     
     // Update the state
     setHospitalSettings(settingsForm);
+    saveHospitalSettings({ id: 'main', ...settingsForm });
     localStorage.setItem("baheya_hospital_settings", JSON.stringify(settingsForm));
     alert(language === "ar" ? "تم حفظ التعديلات وتطبيقها بنجاح!" : "Settings saved and applied successfully!");
   };
@@ -3165,6 +3170,19 @@ export default function App() {
           </button>
           )}
 
+          {/* Cloud Settings Tab %}
+          <button
+            onClick={() => setActiveTab("cloud_settings")}
+            className={`w-full flex items-center gap-3 px-6 py-3 text-right text-xs font-semibold transition-all border-l-4 ${
+              activeTab === "cloud_settings"
+                ? "bg-slate-800 border-blue-500 text-blue-400 font-bold shadow-md"
+                : "border-transparent text-slate-400 hover:bg-slate-850 hover:text-white hover:border-blue-900"
+            }`}
+          >
+            <Cloud className="h-4 w-4 shrink-0 text-blue-500" />
+            <span className="flex-1">{language === "ar" ? "إعدادات السحابة والربط" : "Cloud Connectivity Settings"}</span>
+          </button>
+
           {/* IT Control Panel Tab */}
           {isSupervisor && (
           <button
@@ -4178,6 +4196,10 @@ export default function App() {
               </div>
             );
           })()}
+
+          {activeTab === "cloud_settings" && (
+            <CloudSettingsPage language={language} />
+          )}
 
           {activeTab === "editor" && (() => {
             const userDept = (currentUser?.department || "").toUpperCase().trim();

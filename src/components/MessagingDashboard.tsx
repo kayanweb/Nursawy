@@ -378,10 +378,13 @@ function ChatView({
 
   // Secure client-side localized message viewing filters:
   const visibleMessages = messages.filter(msg => {
-    // 1. Broadcast messages are accessible globally to everyone
+    // 1. Admins/Supervisors can see all communications
+    if (isSupervisorOrAdmin) return true;
+
+    // 2. Broadcast messages are accessible globally to everyone
     if (msg.type === 'broadcast') return true;
 
-    // 2. Departmental messages matching user department
+    // 3. Departmental messages matching user department
     if (msg.type === 'department') {
       if (msg.deptId === currentUser?.department) {
         // If a specific department user was chosen as target, restrict viewing to they and the sender
@@ -393,7 +396,7 @@ function ChatView({
       return false;
     }
 
-    // 3. Supervisor private messages: only accessible to sender and direct recipient
+    // 4. Supervisor private messages: only accessible to sender and direct recipient
     if (msg.type === 'supervisor') {
       return msg.senderId === currentUser?.id || msg.recipientId === currentUser?.id;
     }
