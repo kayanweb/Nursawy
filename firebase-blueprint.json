@@ -1,56 +1,76 @@
 {
   "entities": {
-    "message": {
-      "title": "Message",
-      "description": "Real-time message between staff.",
+    "ClinicalRecord": {
+      "title": "Clinical Record",
+      "description": "A medical record document.",
       "type": "object",
       "properties": {
-        "senderId": { "type": "string" },
-        "receiverId": { "type": "string" },
-        "content": { "type": "string" },
-        "timestamp": { "type": "number" },
-        "read": { "type": "boolean" }
+        "id": { "type": "string" },
+        "patientName": { "type": "string" }
       },
-      "required": ["senderId", "receiverId", "content", "timestamp"]
+      "required": ["id"]
     },
-    "shiftSwap": {
-      "title": "Shift Swap Request",
-      "description": "Request to swap shifts.",
+    "StaffMember": {
+      "title": "Staff Member",
+      "description": "A staff member in the system.",
       "type": "object",
       "properties": {
-        "requesterId": { "type": "string" },
-        "offeredShiftId": { "type": "string" },
-        "requestedShiftId": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] }
+        "id": { "type": "string" },
+        "name": { "type": "string" }
       },
-      "required": ["requesterId", "offeredShiftId", "requestedShiftId", "status"]
+      "required": ["id"]
     },
-    "vacationRequest": {
-      "title": "Vacation Request",
-      "description": "Request for vacation.",
+    "DailyAudit": {
+      "title": "Daily Audit",
+      "description": "An audit checklist.",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
-        "startDate": { "type": "string" },
-        "endDate": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
-        "reason": { "type": "string" }
+        "id": { "type": "string" },
+        "date": { "type": "string" }
       },
-      "required": ["userId", "startDate", "endDate", "status"]
+      "required": ["id"]
+    },
+    "SystemLog": {
+      "title": "System Log",
+      "description": "A system IT log.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "message": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "Notification": {
+        "title": "Notification",
+        "description": "A user notification.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "userId": { "type": "string" }
+        },
+        "required": ["id", "userId"]
     }
   },
   "firestore": {
-    "messages": {
-      "schema": { "$ref": "#/entities/message" },
-      "description": "Messages between users."
+    "/baheya_clinical_records/{recordId}": {
+      "schema": { "$ref": "ClinicalRecord" },
+      "description": "Clinical medical records."
     },
-    "shiftSwaps": {
-      "schema": { "$ref": "#/entities/shiftSwap" },
-      "description": "Shift swap requests."
+    "/baheya_staff_registry/{staffId}": {
+      "schema": { "$ref": "StaffMember" },
+      "description": "Staff registry."
     },
-    "vacationRequests": {
-      "schema": { "$ref": "#/entities/vacationRequest" },
-      "description": "Vacation requests."
+    "/baheya_daily_audits/{auditId}": {
+      "schema": { "$ref": "DailyAudit" },
+      "description": "Daily audits."
+    },
+    "/baheya_system_logs/{logId}": {
+      "schema": { "$ref": "SystemLog" },
+      "description": "System logs."
+    },
+    "/notifications/{notificationId}": {
+        "schema": { "$ref": "Notification" },
+        "description": "User notifications."
     }
   }
 }

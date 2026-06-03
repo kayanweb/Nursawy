@@ -60,8 +60,17 @@ import {
   saveDailyAudit,
   syncSystemLogs,
   saveSystemLog,
-  deleteSystemLog
+  deleteSystemLog,
+  syncDutyTasks,
+  syncCustomTemplates,
+  syncClinicalRecords,
+  saveClinicalRecord,
+  syncSystemUsers,
+  saveSystemUser,
+  syncNotifications,
+  saveNotification
 } from "./lib/firestoreService";
+import { useFirestoreSync } from "./hooks/useFirestoreSync";
 
 // 4 Core Mock Users for Baheya Hospital Access Rules matching the requested design
 const MOCK_USERS: AppUser[] = [
@@ -336,8 +345,8 @@ const DEFAULT_DUTY_TASKS: DailyDutyTask[] = [
 
 export default function App() {
   // DB & State Management
-  const [records, setRecords] = useState<SavedRecord[]>([]);
-  const [customTemplates, setCustomTemplates] = useState<FormTemplate[]>([]);
+  const [records, setRecords] = useFirestoreSync<SavedRecord>(syncClinicalRecords, []);
+  const [customTemplates, setCustomTemplates] = useFirestoreSync<FormTemplate>(syncCustomTemplates, []);
   const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate>(FORM_TEMPLATES[0]);
   const [editingRecord, setEditingRecord] = useState<SavedRecord | null>(null);
   const [activeCellEdit, setActiveCellEdit] = useState<{
@@ -374,16 +383,7 @@ export default function App() {
 
 
   // Dynamic Duty Task & Checklist states
- const [dutyTasks, setDutyTasks] = useState<DailyDutyTask[]>(() => {
-    const stored = localStorage.getItem("baheya_daily_duty_tasks");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {}
-    }
-    
-    // Dynamically map FormTemplates to DutyTasks for all departments
-    return FORM_TEMPLATES.map((t) => ({
+  const [dutyTasks, setDutyTasks] = useFirestoreSync<DailyDutyTask>(syncDutyTasks, FORM_TEMPLATES.map((t) => ({
       id: t.id,
       department: t.departmentDefault,
       taskAr: t.titleAr,
@@ -391,8 +391,7 @@ export default function App() {
       categoryAr: "نموذج",
       categoryEn: "Form",
       createdAt: "2026-01-01"
-    }));
-  });
+    })));
 
   const [dailyChecklists, setDailyChecklists] = useState<UnitDailyChecklist[]>(() => {
     const stored = localStorage.getItem("baheya_daily_checklists");
@@ -727,25 +726,6 @@ export default function App() {
   const [itSelectedUserIdToOverride, setItSelectedUserIdToOverride] = useState<string>("");
   const [itOverwrittenPin, setItOverwrittenPin] = useState<string>("");
 
-  // Notifications system for supervisors/auditors
-  const [notifications, setNotifications] = useState<Array<{ id: string; messageAr: string; messageEn: string; timestamp: string; read: boolean }>>(() => {
-    const stored = localStorage.getItem("baheya_notifications");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {}
-    }
-    return [
-      {
-        id: "init-notif-1",
-        messageAr: "إشعار نظام: تم تنشيط بوابة بهية الرقمية وبدء مراقبة الجودة الطبية والسريرية.",
-        messageEn: "System Notice: Baheya Clinical Audit Portal activated successfully.",
-        timestamp: new Date().toISOString(),
-        read: false
-      }
-    ];
-  });
-
   // IT Subsystem States
   const [itStrictComplianceMode, setItStrictComplianceMode] = useState<boolean>(true);
   const [itConflictResolutionWithNewest, setItConflictResolutionWithNewest] = useState<boolean>(true);
@@ -875,15 +855,7 @@ export default function App() {
   const [editTemplateItemIndex, setEditTemplateItemIndex] = useState<number | null>(null);
 
   // User and Admin Access controls
-  const [systemUsers, setSystemUsers] = useState<AppUser[]>(() => {
-    const stored = localStorage.getItem("baheya_system_users");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {}
-    }
-    return MOCK_USERS;
-  });
+  const [systemUsers, setSystemUsers] = useFirestoreSync<AppUser>(syncSystemUsers, MOCK_USERS);
   
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     return localStorage.getItem("baheya_is_logged_in") === "true";
@@ -898,6 +870,20 @@ export default function App() {
     }
     return MOCK_USERS[0]; // sister fatima by default
   });
+
+  // Notifications system for supervisors/auditors
+  const [notifications, setNotifications] = useFirestoreSync<Notification>(
+    (onData) => syncNotifications(currentUser.id, onData),
+    [{
+      id: "init-notif-1",
+      userId: currentUser.id,
+      messageAr: "إشعار نظام: تم تنشيط بوابة بهية الرقمية وبدء مراقبة الجودة الطبية والسريرية.",
+      messageEn: "System Notice: Baheya Clinical Audit Portal activated successfully.",
+      timestamp: new Date().toISOString(),
+      read: false
+    }],
+    [currentUser.id]
+  );
 
   const isSupervisor = currentUser.role === "admin" || currentUser.role === "quality" || currentUser.role === "president" || currentUser.role === "head_nurse" || currentUser.role === "it";
 

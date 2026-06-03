@@ -118,6 +118,15 @@ export interface DepartmentRoster {
   rows: RosterRow[];
 }
 
+export interface Notification {
+  id: string;
+  userId: string;
+  messageAr: string;
+  messageEn: string;
+  timestamp: string;
+  read: boolean;
+}
+
 export interface RosterWish {
   id: string;
   employeeId: string;

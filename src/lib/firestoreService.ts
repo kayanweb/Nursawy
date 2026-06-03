@@ -5,9 +5,11 @@ import {
   setDoc,
   deleteDoc,
   onSnapshot,
-  getDocFromServer
+  getDocFromServer,
+  query,
+  where
 } from "firebase/firestore";
-import { SavedRecord, AppUser, UnitDailyChecklist, SystemLog } from "../types";
+import { SavedRecord, AppUser, UnitDailyChecklist, SystemLog, Notification } from "../types";
 
 export enum OperationType {
   CREATE = "create",
@@ -189,3 +191,122 @@ export async function deleteSystemLog(logId: string): Promise<void> {
     handleFirestoreError(error, OperationType.DELETE, path);
   }
 }
+
+// 7. Duty Tasks Sync
+export function syncDutyTasks(onData: (tasks: DailyDutyTask[]) => void) {
+  const path = "baheya_daily_duty_tasks";
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => {
+      const tasks: DailyDutyTask[] = [];
+      snapshot.forEach((doc) => {
+        tasks.push(doc.data() as DailyDutyTask);
+      });
+      onData(tasks);
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    }
+  );
+}
+
+export async function saveDutyTask(task: DailyDutyTask): Promise<void> {
+  const path = `baheya_daily_duty_tasks/${task.id}`;
+  try {
+    await setDoc(doc(db, "baheya_daily_duty_tasks", task.id), task);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+// 8. Custom Templates Sync
+export function syncCustomTemplates(onData: (templates: FormTemplate[]) => void) {
+  const path = "baheya_custom_templates";
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => {
+      const templates: FormTemplate[] = [];
+      snapshot.forEach((doc) => {
+        templates.push(doc.data() as FormTemplate);
+      });
+      onData(templates);
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    }
+  );
+}
+
+export async function saveCustomTemplate(template: FormTemplate): Promise<void> {
+  const path = `baheya_custom_templates/${template.id}`;
+  try {
+    await setDoc(doc(db, "baheya_custom_templates", template.id), template);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export async function deleteCustomTemplate(templateId: string): Promise<void> {
+  const path = `baheya_custom_templates/${templateId}`;
+  try {
+    await deleteDoc(doc(db, "baheya_custom_templates", templateId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+// 10. System Users Sync
+export function syncSystemUsers(onData: (users: AppUser[]) => void) {
+  const path = "baheya_system_users";
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => {
+      const users: AppUser[] = [];
+      snapshot.forEach((doc) => {
+        users.push(doc.data() as AppUser);
+      });
+      onData(users);
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    }
+  );
+}
+
+export async function saveSystemUser(user: AppUser): Promise<void> {
+  const path = `baheya_system_users/${user.id}`;
+  try {
+    await setDoc(doc(db, "baheya_system_users", user.id), user);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+// 11. Notifications Sync
+export function syncNotifications(userId: string, onData: (notifications: Notification[]) => void) {
+  const path = "notifications";
+  const q = query(collection(db, path), where("userId", "==", userId));
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const notifications: Notification[] = [];
+      snapshot.forEach((doc) => {
+        notifications.push(doc.data() as Notification);
+      });
+      onData(notifications);
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    }
+  );
+}
+
+export async function saveNotification(notification: Notification): Promise<void> {
+  const path = `notifications/${notification.id}`;
+  try {
+    await setDoc(doc(db, "notifications", notification.id), notification);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
